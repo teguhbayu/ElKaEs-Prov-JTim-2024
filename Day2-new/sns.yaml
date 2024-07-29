@@ -1,0 +1,10 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Resource for SNS
+Resources:
+  topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: handi@seamolec.org
+          Protocol: email
+      TopicName: EC2

@@ -1,0 +1,296 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Resource for Networking
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.50.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: Telkom-VPC
+  
+  PubSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 172.50.1.0/24
+      Tags: 
+        - Key: Name
+          Value: PublicSubnet1a
+  
+  PubSubnet1b:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 172.50.2.0/24
+      Tags: 
+        - Key: Name
+          Value: PublicSubnet1b
+  
+  PubSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1c
+      CidrBlock: 172.50.3.0/24
+      Tags: 
+        - Key: Name
+          Value: PublicSubnet1c
+  
+  PubSubnet1d:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1d
+      CidrBlock: 172.50.4.0/24
+      Tags: 
+        - Key: Name
+          Value: PublicSubnet1d
+  
+  PrivSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 172.50.5.0/24
+      Tags: 
+        - Key: Name
+          Value: PrivateSubnet1a
+  
+  PrivSubnet1b:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 172.50.6.0/24
+      Tags: 
+        - Key: Name
+          Value: PrivateSubnet1b
+  
+  PrivSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1c
+      CidrBlock: 172.50.7.0/24
+      Tags: 
+        - Key: Name
+          Value: PrivateSubnet1c
+  
+  PrivSubnet1d:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1d
+      CidrBlock: 172.50.8.0/24
+      Tags: 
+        - Key: Name
+          Value: PrivateSubnet1d
+  
+  PrivSubnet2a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 172.50.9.0/24
+      Tags: 
+        - Key: Name
+          Value: PrivateSubnet2a
+  
+  PrivSubnet2b:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 172.50.10.0/24
+      Tags: 
+        - Key: Name
+          Value: PrivateSubnet2b
+  
+  PrivSubnet2c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1c
+      CidrBlock: 172.50.11.0/24
+      Tags: 
+        - Key: Name
+          Value: PrivateSubnet2c
+  
+  PrivSubnet2d:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1d
+      CidrBlock: 172.50.12.0/24
+      Tags: 
+        - Key: Name
+          Value: PrivateSubnet2d
+  
+  IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: 
+        - Key: Name
+          Value: Telkom-igw
+  
+  IGWAtt:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref IGW
+      VpcId: !Ref VPC
+
+  EIP1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags:
+        - Key: Name
+          Value: EIP1
+  
+  EIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags:
+        - Key: Name
+          Value: EIP2
+  
+  NGW1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EIP1.AllocationId
+      SubnetId: !Ref PubSubnet1a
+      Tags:
+        - Key: Name
+          Value: TelkomNGW1
+  
+  NGW2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EIP2.AllocationId
+      SubnetId: !Ref PubSubnet1b
+      Tags:
+        - Key: Name
+          Value: TelkomNGW2
+  
+  PubRTB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PublicRoute
+  
+  PrivRTB1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PrivateRoute1
+  
+  PrivRTB2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PrivateRoute2
+  
+
+  PubRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PubRTB
+      GatewayId: !Ref IGW
+      DestinationCidrBlock: 0.0.0.0/0
+  
+  Priv1Route:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivRTB1
+      NatGatewayId: !Ref NGW1
+      DestinationCidrBlock: 0.0.0.0/0
+  
+  Priv2Route:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivRTB2
+      NatGatewayId: !Ref NGW2
+      DestinationCidrBlock: 0.0.0.0/0
+  
+  Pub1aAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PubRTB
+      SubnetId: !Ref PubSubnet1a
+  
+  Pub1bAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PubRTB
+      SubnetId: !Ref PubSubnet1b
+  
+  Pub1cAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PubRTB
+      SubnetId: !Ref PubSubnet1c
+  
+  Pub1dAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PubRTB
+      SubnetId: !Ref PubSubnet1d
+  
+  Priv1aAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRTB1
+      SubnetId: !Ref PrivSubnet1a
+  
+  Priv1bAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRTB1
+      SubnetId: !Ref PrivSubnet1b
+
+  Priv1cAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRTB1
+      SubnetId: !Ref PrivSubnet1c
+  
+  Priv1dAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRTB1
+      SubnetId: !Ref PrivSubnet1d
+  
+  Priv2aAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRTB2
+      SubnetId: !Ref PrivSubnet2a
+  
+  Priv2bAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRTB2
+      SubnetId: !Ref PrivSubnet2b
+
+  Priv2cAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRTB2
+      SubnetId: !Ref PrivSubnet2c
+  
+  Priv2dAss:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRTB2
+      SubnetId: !Ref PrivSubnet2d
+

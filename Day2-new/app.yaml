@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Resource for App
+Parameters:
+  VPC:
+    Type: String
+
+Resources:
+  SGLB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allows access on port 80 and 443
+      GroupName: LB
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+      Tags:
+        - Key: Name
+          Value: sg-LB
+      VpcId: !Ref VPC
+  
+  SGAPP:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allows access on port 5000
+      GroupName: APPS
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+      Tags:
+        - Key: Name
+          Value: sg-APPS
+      VpcId: !Ref VPC
+  
+  LT:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: ami-04e5276ebb8451442
+        InstanceType: t2.micro
+        SecurityGroupIds:
+          - !Ref SGAPP
+        UserData:
+          Fn::Base64:
+            !Sub |
+              #!/bin/bash
+              sudo -u ec2-user -i <<'EOF'
+              sudo yum update -y 
+              sudo yum install git nodejs -y
+              git clone https://github.com/handipradana/dash.git
+              cd /home/ec2-user/dash
+              npm i
+              sudo npm i pm2 -g
+              aws configure set aws_access_key_id "ASIA3FGM4WSR4YRILTPT"
+              aws configure set aws_secret_access_key "dpFBpRpFzzGznfWwDe4P2AvVtVUrR7PE3pRbn6BO"
+              aws configure set aws_session_token "IQoJb3JpZ2luX2VjEFYaCXVzLXdlc3QtMiJIMEYCIQCKODvZe0KBherRpTOJSE5Cpsl+Dq1vYyaE5M+gPatAMAIhAJz20xrmS/GfH5ACyLiY9L9ZnRx3ReQQSUl6QwYdMGs0KrUCCJ///////////wEQABoMNzY3MDgxMzYyNTk1IgyIQcqnkEdsu0dqZeIqiQIS6hHrSk/gUDfPrni/7ojhcXGKy6/+opvFzsXnEf26ggjsfni3ooXyOU1FR4p4hz134nbiHFgfLn6ftwGtoJZE2z0ej4+yvSs0BOb6JJYW2zzwSFZkQce09TT42hHnvifqe5ilsIvZBKjd6/Pc8xIvxNvZIfywKOMbcKpzd/+zKf53x9UbuQBiySd25Yu/s5HgWGOIzgINcSckx9O3z4caJd1usqbVbGkQug0SIDKq/8s/Lozwc2kDg7yqFzKxmD5GSxR76sE6MBy00KrwSu5s0TpRbJ26KOm70SGmIcuGpSB9+4bPabkSmrsBRgcTYpLOSgDqgRPm/g3sMxVsyH213Jg4n2omGNMhMI3jp7EGOpwBA6O9gLplAw/4+fVS5NHQlXjRczT0R++KP0hYGCvF8ZJeQiQ+O34l0gNIW8XWJbLUwv40PFm3sTrTRZGHJYDtUPsBWLLtNt2SJJ70kjv8Xb+l85ejuOnKN0wRSwzztT/ivSudjGkBM/2OgAkP7A4epV1ODYO/DmrZyFwr9IX5cGfuLHYoPzuic7N8QGr+uyU9SBaj+n6c/eeXb5Qq" 
+              echo 'PORT = 5000' > .env
+              echo 'API_URL = "https://s277rqsa47.execute-api.us-east-1.amazonaws.com/production"' >> .env
+              npm run prod
+              aws sns publish --topic-arn "arn:aws:sns:us-east-1:767081362595:EC2" --message "Instance Created!"
+              EOF
+      LaunchTemplateName: AppLT
+      VersionDescription: 1
+    
+  LB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: Telkom-LB
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref SGLB
+      Subnets:
+        - subnet-0fe2c09ea5946d458
+        - subnet-096e4536e9bb89572
+        - subnet-092f7a1d51087e80b
+        - subnet-0a4a0cd60c95a9e90
+      Type: application
+  
+  TG:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: Telkom-TG
+      Port: 5000
+      Protocol: HTTP
+      IpAddressType: ipv4
+      TargetType: instance
+      VpcId: !Ref VPC
+  
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !GetAtt TG.TargetGroupArn
+          Type: forward
+      LoadBalancerArn: !GetAtt LB.LoadBalancerArn
+      Port: 80
+      Protocol: HTTP
+  
+  ASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LT
+        Version: !GetAtt LT.LatestVersionNumber
+      TargetGroupARNs:
+        - !GetAtt TG.TargetGroupArn
+      AvailabilityZones:
+        - us-east-1a
+        - us-east-1b
+        - us-east-1c
+        - us-east-1d
+      DesiredCapacity: 4
+      MinSize: 2
+      MaxSize: 4
+      VPCZoneIdentifier:
+        - subnet-05c255ad162c65830
+        - subnet-093f676330d89d9b7
+        - subnet-00e7c9fd595668356
+        - subnet-0426d8ff1fa1c0727

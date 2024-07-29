@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Resource for S3 bucket
+Resources:
+  Bucket1:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: bucketiot-teguhbayupratama-malang
+  
+  Bucket1Policy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Bucket1
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Action: 's3:GetObject'
+            Effect: Allow
+            Resource: 'arn:aws:s3:::bucketiot-teguhbayupratama-malang/*'
+            Principal: '*'
+            Condition:
+              IpAddress:
+                'aws:SourceIp': 
+                  - 103.147.77.194/32
+  
+
+  Bucket2:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: bucketdata-teguhbayupratama-malang
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 365
+            Transitions:
+              - StorageClass: DEEP_ARCHIVE
+                TransitionInDays: 30
+            Status: Enabled
+      ReplicationConfiguration:
+        Role: arn:aws:iam::767081362595:role/LabRole
+        Rules:
+          - Destination:
+              Bucket: arn:aws:s3:::bucketdatareplication-teguhbayupratama
+            Status: Enabled
+      VersioningConfiguration:
+        Status: Enabled

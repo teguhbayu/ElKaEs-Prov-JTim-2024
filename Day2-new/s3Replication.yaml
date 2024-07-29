@@ -1,0 +1,9 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Resource for S3 bucket replication
+Resources:
+  Bucket1:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: bucketdatareplication-teguhbayupratama
+        VersioningConfiguration:
+          Status: Enabled
