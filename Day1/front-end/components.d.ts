@@ -7,7 +7,7 @@ import '@vue/runtime-core'
 
 export {}
 
-declare module '@vue/runtime-core' {
+declare module 'vue' {
   export interface GlobalComponents {
     AddOrder: typeof import('./src/components/AddOrder.vue')['default']
     AlertConfirm: typeof import('./src/components/AlertConfirm.vue')['default']
